@@ -1,8 +1,0 @@
-[build]
-  publish = "dist/goal-tracker-front/browser"
-  command = "ng build --configuration static"
-
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
