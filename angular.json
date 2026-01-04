@@ -17,7 +17,7 @@
         "build": {
           "builder": "@angular/build:application",
           "options": {
-           "outputPath": "dist/goal-tracker-front/browser",
+            "outputPath": "dist/frontend",
             "browser": "src/main.ts",
             "tsConfig": "tsconfig.app.json",
             "assets": [
@@ -57,7 +57,10 @@
               "sourceMap": true
             },
             "static": {
-              "outputMode": "static"
+              "outputMode": "static",
+              "optimization": true,
+              "extractLicenses": true,
+              "sourceMap": false
             }
           },
           "defaultConfiguration": "production"
