@@ -1,6 +1,6 @@
 [build]
   publish = "dist/goal-tracker-front/browser"
-  command = "npm run build"
+  command = "ng build --configuration static"
 
 [[redirects]]
   from = "/*"
