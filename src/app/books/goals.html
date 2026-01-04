@@ -1,0 +1,139 @@
+<div class="container">
+  <h1>Goal Setter</h1>
+
+  <div *ngIf="error" class="error">
+    {{ error }}
+  </div>
+
+  <div class="add-goal">
+    <h2>Add New Goal</h2>
+    <div class="form-group">
+      <input type="text" [(ngModel)]="newGoal.title" placeholder="Goal Title" class="form-control">
+      <textarea [(ngModel)]="newGoal.description" placeholder="Goal Description" class="form-control"></textarea>
+      <div class="row">
+        <div class="col">
+          <label>Category</label>
+          <select [(ngModel)]="newGoal.category" class="form-control">
+            <option *ngFor="let c of goalService.categories" [value]="c">{{ c }}</option>
+          </select>
+        </div>
+        <div class="col">
+          <label>Priority</label>
+          <select [(ngModel)]="newGoal.priority" class="form-control">
+            <option *ngFor="let p of goalService.priorities" [value]="p">{{ p }}</option>
+          </select>
+        </div>
+        <div class="col">
+          <label>Due Date</label>
+          <input required type="date" [(ngModel)]="newGoal.targetDate" class="form-control">
+        </div>
+      </div>
+
+      <label>Notes</label>
+      <textarea [(ngModel)]="newGoal.notes" placeholder="Optional notes" class="form-control"></textarea>
+
+      <button type="button" (click)="createGoal()" class="btn btn-primary">Add Goal</button>
+    </div>
+  </div>
+
+  <div class="goal-list">
+    <h2>My Goals</h2>
+
+    <div class="filters">
+      <select [(ngModel)]="filterCategory" (change)="applyFilters()" class="form-control">
+        <option>All</option>
+        <option *ngFor="let c of goalService.categories">{{ c }}</option>
+      </select>
+      <select [(ngModel)]="filterPriority" (change)="applyFilters()" class="form-control">
+        <option>All</option>
+        <option *ngFor="let p of goalService.priorities">{{ p }}</option>
+      </select>
+      <select [(ngModel)]="filterStatus" (change)="applyFilters()" class="form-control">
+        <option>All</option>
+        <option value="pending">Pending</option>
+        <option value="in-progress">In Progress</option>
+        <option value="completed">Completed</option>
+      </select>
+      <input placeholder="Search..." [(ngModel)]="filterSearch" (input)="applyFilters()" class="form-control" />
+      <button type="button" class="btn btn-danger" (click)="clearAll()">Clear All</button>
+    </div>
+
+    <div *ngIf="filteredGoals.length === 0" class="empty">No goals yet — create your first goal above.</div>
+
+    <div *ngFor="let goal of filteredGoals" class="goal-card">
+      <div class="goal-info">
+        <h3>{{ goal.title }} <small class="muted">({{ goal.category }} • {{ goal.priority }})</small></h3>
+        <p class="goal-description">{{ goal.description }}</p>
+        <div class="goal-meta">
+          <div class="goal-progress">
+            <div class="progress-bar">
+              <div class="progress-fill" [style.width.%]="goal.progress"></div>
+            </div>
+            <span class="progress-text">{{ goal.progress }}%</span>
+          </div>
+          <div class="goal-status" [ngClass]="getStatusClass(goal.status)">{{ goal.status | titlecase }}</div>
+          <div class="goal-target-date">Target: {{ goal.targetDate | date:'shortDate' }}</div>
+          <div class="goal-days-left" [ngClass]="calculateDaysLeft(goal.targetDate) < 0 ? 'overdue' : ''">
+            {{ calculateDaysLeft(goal.targetDate) > 0 ? calculateDaysLeft(goal.targetDate) + ' days left' : calculateDaysLeft(goal.targetDate) === 0 ? 'Due today' : getAbsValue(calculateDaysLeft(goal.targetDate)) + ' days overdue' }}
+          </div>
+
+          <div class="subtasks" *ngIf="goal.subTasks?.length">
+            <h4>Subtasks</h4>
+            <ul>
+              <li *ngFor="let s of goal.subTasks">
+                <label>
+                  <input type="checkbox" [checked]="s.completed" (change)="toggleSubTask(goal, s)" />
+                  <span [class.completed]="s.completed">{{ s.title }}</span>
+                </label>
+              </li>
+            </ul>
+            <div class="add-subtask">
+              <input #subInput placeholder="Add subtask" class="form-control" />
+              <button type="button" (click)="addSubTask(goal, subInput.value); subInput.value='';" class="btn btn-sm">Add</button>
+            </div>
+          </div>
+
+          <div class="reminders">
+            <h4>Reminders</h4>
+            <ul *ngIf="goal.reminders?.length; else noRem">
+              <li *ngFor="let r of goal.reminders">
+                <span>{{ r.time | date:'short' }} - {{ r.message }}</span>
+                <button type="button" class="btn btn-sm" (click)="removeReminder(goal.id, r.id)">Delete</button>
+              </li>
+            </ul>
+            <ng-template #noRem><div class="muted">No reminders</div></ng-template>
+            <div class="add-reminder">
+              <input #remInput type="datetime-local" class="form-control" />
+              <input #remMsg placeholder="Message (optional)" class="form-control" />
+              <button type="button" (click)="addReminder(goal, remInput.value, remMsg.value); remInput.value=''; remMsg.value='';" class="btn btn-sm">Add Reminder</button>
+            </div>
+          </div>
+
+          <div class="notes" *ngIf="goal.notes">Notes: {{ goal.notes }}</div>
+        </div>
+      </div>
+      <div class="goal-actions">
+        <button type="button" (click)="selectGoal(goal)" class="btn btn-secondary">Edit</button>
+        <button type="button" (click)="deleteGoal(goal.id)" class="btn btn-danger">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="isEditing" class="edit-goal">
+    <h2>Edit Goal</h2>
+    <div class="form-group">
+      <input type="text" [(ngModel)]="editGoal.title" placeholder="Goal Title" class="form-control">
+      <textarea [(ngModel)]="editGoal.description" placeholder="Goal Description" class="form-control"></textarea>
+      <input type="date" [(ngModel)]="editGoal.targetDate" class="form-control">
+      <input type="number" [(ngModel)]="editGoal.progress" placeholder="Progress (0-100)%" min="0" max="100" class="form-control">
+      <select [(ngModel)]="editGoal.status" class="form-control">
+        <option value="not-started">Not Started</option>
+        <option value="in-progress">In Progress</option>
+        <option value="completed">Completed</option>
+      </select>
+      <button type="button" (click)="updateGoal()" class="btn btn-success">Update Goal</button>
+      <button type="button" (click)="cancelEdit()" class="btn btn-secondary">Cancel</button>
+    </div>
+  </div>
+</div>
+

@@ -1,0 +1,9 @@
+<nav class="topnav">
+  <a routerLink="/dashboard">Dashboard</a>
+  <a routerLink="/goals">Goals</a>
+  <div class="nav-right">
+    <button type="button" class="btn" (click)="themeToggle()">Toggle Theme</button>
+  </div>
+</nav>
+<router-outlet></router-outlet>
+<app-toasts></app-toasts>
