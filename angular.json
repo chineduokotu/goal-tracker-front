@@ -60,7 +60,9 @@
               "outputMode": "static",
               "optimization": true,
               "extractLicenses": true,
-              "sourceMap": false
+              "sourceMap": false,
+              "prerender": false,
+              "ssr": false
             }
           },
           "defaultConfiguration": "production"
